@@ -1,0 +1,375 @@
+<title>Job Search Watcher</title>
+<style>
+:root{
+  --bg:#faf9f7; --card:#ffffff; --border:#e4e1da; --text:#232220; --text-dim:#6b6a66;
+  --strong:#1f6f4a; --strong-bg:#e7f3ec; --good:#3d6b96; --good-bg:#eaf1f8;
+  --moderate:#8a6d1f; --moderate-bg:#f7f0dd; --low:#8a8580; --low-bg:#f1efec;
+  --accent:#3d6b96; --pill-border:#d8d4cb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a1918; --card:#232220; --border:#37352f; --text:#eae7e0; --text-dim:#a19d94;
+    --strong:#5fbf8f; --strong-bg:#173328; --good:#7fb0dd; --good-bg:#182c3a;
+    --moderate:#d9b653; --moderate-bg:#332a12; --low:#8a8580; --low-bg:#2a2825;
+    --accent:#7fb0dd; --pill-border:#454138;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1a1918; --card:#232220; --border:#37352f; --text:#eae7e0; --text-dim:#a19d94;
+  --strong:#5fbf8f; --strong-bg:#173328; --good:#7fb0dd; --good-bg:#182c3a;
+  --moderate:#d9b653; --moderate-bg:#332a12; --low:#8a8580; --low-bg:#2a2825;
+  --accent:#7fb0dd; --pill-border:#454138;
+}
+*{box-sizing:border-box;}
+body{background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.45;}
+.wrap{max-width:840px; margin:0 auto; padding:28px 20px 80px;}
+h1{font-size:1.5rem; margin:0 0 4px;}
+.sub{color:var(--text-dim); font-size:0.9rem; margin-bottom:16px;}
+.nav{display:flex; gap:6px; margin-bottom:20px; border-bottom:1px solid var(--border);}
+.nav-btn{background:transparent; border:none; color:var(--text-dim); font-size:0.9rem; font-family:inherit; padding:8px 4px 10px; margin-right:14px; cursor:pointer; border-bottom:2px solid transparent;}
+.nav-btn.active{color:var(--text); border-bottom-color:var(--accent); font-weight:600;}
+.nav-btn:hover{color:var(--text);}
+.summary{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px;}
+.stat{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 14px; min-width:88px;}
+.stat .n{font-size:1.3rem; font-weight:600;}
+.stat .l{font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.03em;}
+.tier-section{margin-bottom:28px;}
+.tier-header{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+.tier-header h2{font-size:1rem; margin:0; text-transform:uppercase; letter-spacing:0.04em;}
+.card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:10px; position:relative;}
+.card-top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.card-title{font-weight:600; font-size:0.98rem;}
+.card-title a{color:var(--text); text-decoration:none;}
+.card-title a:hover{text-decoration:underline;}
+.company{color:var(--text-dim); font-size:0.85rem;}
+.meta{display:flex; gap:10px; flex-wrap:wrap; font-size:0.8rem; color:var(--text-dim); margin-top:4px;}
+.pill{border:1px solid var(--pill-border); border-radius:999px; padding:1px 9px; font-size:0.72rem;}
+.curated-pill{border-color:var(--accent); color:var(--accent);}
+.note{margin-top:8px; font-size:0.88rem; color:var(--text);}
+.tag-strong{color:var(--strong);} .tag-good{color:var(--good);} .tag-moderate{color:var(--moderate);} .tag-low{color:var(--low);}
+.dot-strong{background:var(--strong-bg); color:var(--strong);}
+.dot-good{background:var(--good-bg); color:var(--good);}
+.dot-moderate{background:var(--moderate-bg); color:var(--moderate);}
+.dot-low{background:var(--low-bg); color:var(--low);}
+.pill-tier{border-radius:6px; padding:2px 8px; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;}
+.history{margin-top:36px; border-top:1px solid var(--border); padding-top:16px;}
+.history h2{font-size:0.95rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-dim);}
+.history-item{cursor:pointer; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.9rem; color:var(--accent);}
+.history-item:hover{text-decoration:underline;}
+.empty{color:var(--text-dim); font-size:0.9rem; padding:20px 0;}
+.caveats{background:var(--low-bg); border-radius:10px; padding:12px 16px; font-size:0.85rem; color:var(--text-dim); margin-top:20px;}
+.loading{color:var(--text-dim); padding:40px 0; text-align:center;}
+.controls{display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:0.85rem; color:var(--text-dim);}
+.controls input{margin:0;}
+.card.is-interested{border-color:var(--strong); box-shadow:inset 3px 0 0 var(--strong);}
+.card.is-not-interested{opacity:0.55;}
+.card.is-not-interested .note{color:var(--text-dim);}
+.flag-row{display:flex; gap:6px; margin-top:10px; align-items:center; flex-wrap:wrap;}
+.flag-btn{border:1px solid var(--pill-border); background:transparent; color:var(--text-dim); border-radius:999px; padding:3px 11px; font-size:0.75rem; cursor:pointer; font-family:inherit;}
+.flag-btn:hover{border-color:var(--accent);}
+.flag-btn.active-interested{background:var(--strong-bg); color:var(--strong); border-color:var(--strong);}
+.flag-btn.active-not-interested{background:var(--low-bg); color:var(--text-dim); border-color:var(--pill-border); text-decoration:line-through;}
+.seen-note{font-size:0.72rem; color:var(--text-dim);}
+</style>
+
+<div class="wrap">
+  <h1>Job Search Watcher</h1>
+  <div class="sub" id="subhead">Loading latest digest…</div>
+  <div class="nav" id="nav" hidden>
+    <button type="button" class="nav-btn active" data-view="latest">Latest digest</button>
+    <button type="button" class="nav-btn" data-view="interested">Interested<span id="interested-count"></span></button>
+  </div>
+  <div class="controls" id="controls" hidden>
+    <label><input type="checkbox" id="hide-not-interested"> Hide postings marked not interested</label>
+  </div>
+  <div id="app"><div class="loading">Loading…</div></div>
+  <div class="history" id="history-section" hidden>
+    <h2>Previous digests</h2>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<script>
+const TIER_ORDER = ["Strong","Good","Moderate","Low"];
+const TIER_LABEL = {Strong:"Strong fit", Good:"Good fit", Moderate:"Moderate fit", Low:"Low fit"};
+
+function fmtSalary(min,max){
+  const f = n => n ? "$" + Math.round(n/1000) + "K" : null;
+  const a = f(min), b = f(max);
+  if(a && b) return a + "–" + b;
+  if(b) return "up to " + b;
+  if(a) return a + "+";
+  return "not listed";
+}
+
+let currentDigest = null;
+let statusMap = {};       // id -> status ("interested" | "not_interested")
+let seenJobsMeta = {};    // id -> {company, title, tier, first_seen_digest} (fallback when full posting isn't found)
+let allPostingsById = {}; // id -> full posting object (merged across all loaded digests), plus digestDate
+let hideNotInterested = false;
+let currentView = "latest";
+
+function setView(view){
+  currentView = view;
+  document.querySelectorAll(".nav-btn").forEach(b=>{
+    b.classList.toggle("active", b.getAttribute("data-view") === view);
+  });
+  document.getElementById("controls").hidden = (view !== "latest");
+  document.getElementById("history-section").hidden = (view !== "latest") || !hasHistory;
+  if(view === "latest"){
+    renderDigest(currentDigest);
+  } else {
+    renderInterestedView();
+  }
+}
+
+let hasHistory = false;
+
+function renderDigest(digest){
+  currentDigest = digest;
+  if(currentView !== "latest") return;
+  const app = document.getElementById("app");
+  const sub = document.getElementById("subhead");
+  if(!digest){
+    sub.textContent = "No digest yet.";
+    app.innerHTML = '<div class="empty">No digest has been generated yet.</div>';
+    return;
+  }
+  const c = digest.counts || {};
+  sub.textContent = "Week of " + digest.date + " · " + (c.total||0) + " qualifying postings";
+
+  let html = '<div class="summary">';
+  html += statBlock(c.strong,"Strong","tag-strong");
+  html += statBlock(c.good,"Good","tag-good");
+  html += statBlock(c.moderate,"Moderate","tag-moderate");
+  html += statBlock(c.low,"Low","tag-low");
+  html += '</div>';
+
+  const byTier = {};
+  (digest.postings||[]).forEach(p=>{
+    if(p.tier === "Excluded") return;
+    if(hideNotInterested && statusMap[p.id] === "not_interested") return;
+    (byTier[p.tier] = byTier[p.tier]||[]).push(p);
+  });
+
+  let anyShown = false;
+  TIER_ORDER.forEach(tier=>{
+    const items = byTier[tier];
+    if(!items || !items.length) return;
+    anyShown = true;
+    html += '<div class="tier-section"><div class="tier-header"><h2 class="tag-'+tier.toLowerCase()+'">'+TIER_LABEL[tier]+'</h2></div>';
+    items.forEach(p=>{ html += renderCard(p, tier); });
+    html += '</div>';
+  });
+  if(!anyShown){
+    html += '<div class="empty">Nothing to show with the current filter.</div>';
+  }
+
+  const excluded = (digest.postings||[]).filter(p=>p.tier==="Excluded");
+  if(excluded.length){
+    html += '<div class="caveats"><strong>Filtered out as likely false positives:</strong><br>';
+    excluded.forEach(p=>{ html += '&bull; ' + escapeHtml(p.company) + ' — ' + escapeHtml(p.title) + ': ' + escapeHtml(p.note) + '<br>'; });
+    html += '</div>';
+  }
+
+  app.innerHTML = html;
+}
+
+function renderInterestedView(){
+  const app = document.getElementById("app");
+  const sub = document.getElementById("subhead");
+  const interestedIds = Object.keys(statusMap).filter(id => statusMap[id] === "interested");
+
+  const items = interestedIds.map(id=>{
+    const full = allPostingsById[id];
+    if(full) return Object.assign({}, full, {_seenDate: full.digestDate});
+    const meta = seenJobsMeta[id] || {};
+    return {
+      id: id,
+      title: meta.title || "(title unavailable)",
+      company: meta.company || "(company unavailable)",
+      tier: meta.tier || "Low",
+      note: "Full posting details aren't available (this posting predates the current dashboard data, or its source digest is no longer loaded).",
+      url: null,
+      location: null,
+      work_arrangement: null,
+      min_salary: null,
+      max_salary: null,
+      curated: false,
+      _seenDate: meta.first_seen_digest
+    };
+  });
+
+  items.sort((a,b)=> (b._seenDate||"").localeCompare(a._seenDate||""));
+
+  sub.textContent = items.length + (items.length === 1 ? " posting marked interested" : " postings marked interested") + ", across all digests";
+
+  if(!items.length){
+    app.innerHTML = '<div class="empty">You haven\'t marked any postings as interested yet. Use the "Interested" button on a card in the Latest digest view.</div>';
+    return;
+  }
+
+  let html = "";
+  items.forEach(p=>{
+    html += renderCard(p, p.tier || "Low", p._seenDate);
+  });
+  app.innerHTML = html;
+}
+
+function statBlock(n,label,cls){
+  return '<div class="stat"><div class="n '+cls+'">'+(n||0)+'</div><div class="l">'+label+'</div></div>';
+}
+
+function escapeHtml(s){
+  const d = document.createElement("div");
+  d.textContent = s || "";
+  return d.innerHTML;
+}
+
+function renderCard(p, tier, seenDate){
+  const loc = p.location || "Location not listed";
+  const arr = p.work_arrangement ? p.work_arrangement : "";
+  const curatedPill = p.curated ? '<span class="pill curated-pill">curated list</span>' : "";
+  const titleHtml = p.url ? '<a href="'+p.url+'" target="_blank" rel="noopener">'+escapeHtml(p.title)+'</a>' : escapeHtml(p.title);
+  const status = statusMap[p.id];
+  const cardClass = status === "interested" ? " is-interested" : status === "not_interested" ? " is-not-interested" : "";
+  const seenNote = seenDate ? '<div class="seen-note">First seen: week of '+escapeHtml(seenDate)+'</div>' : "";
+  return '<div class="card'+cardClass+'" data-job-id="'+escapeHtml(p.id)+'">'
+    + '<div class="card-top">'
+    +   '<div><div class="card-title">'+titleHtml+'</div><div class="company">'+escapeHtml(p.company)+'</div></div>'
+    +   '<span class="pill-tier dot-'+(tier||"low").toLowerCase()+'">'+(tier||"Low")+'</span>'
+    + '</div>'
+    + '<div class="meta"><span class="pill">'+escapeHtml(loc)+'</span>'
+    +   (arr ? '<span class="pill">'+escapeHtml(arr)+'</span>' : '')
+    +   '<span class="pill">'+fmtSalary(p.min_salary,p.max_salary)+'</span>'
+    +   curatedPill
+    + '</div>'
+    + '<div class="note">'+escapeHtml(p.note)+'</div>'
+    + seenNote
+    + '<div class="flag-row">'
+    +   '<button type="button" class="flag-btn'+(status==="interested" ? ' active-interested' : '')+'" data-flag-action="interested" data-job-id="'+escapeHtml(p.id)+'">Interested</button>'
+    +   '<button type="button" class="flag-btn'+(status==="not_interested" ? ' active-not-interested' : '')+'" data-flag-action="not_interested" data-job-id="'+escapeHtml(p.id)+'">Not interested</button>'
+    + '</div>'
+    + '</div>';
+}
+
+async function main(){
+  let db = null;
+  try{ db = await claude.use("db"); }catch(e){}
+  if(!db){
+    document.getElementById("subhead").textContent = "Live data unavailable in this view.";
+    document.getElementById("app").innerHTML = '<div class="empty">This page needs the database connection to load digests, and it is not available right now.</div>';
+    return;
+  }
+
+  async function loadStatusMap(){
+    try{
+      const res = await db.collection("seen_jobs").limit(1000).get();
+      const docs = res.docs || res || [];
+      const map = {};
+      const meta = {};
+      docs.forEach(d=>{
+        const data = d.data ? d.data() : d;
+        const id = d.id || (data && data.id);
+        if(id && data && data.status) map[id] = data.status;
+        if(id && data) meta[id] = data;
+      });
+      statusMap = map;
+      seenJobsMeta = meta;
+    }catch(e){
+      statusMap = {};
+      seenJobsMeta = {};
+    }
+  }
+
+  async function loadAllPostingsIndex(){
+    try{
+      const res = await db.collection("digests").orderBy("date","desc").limit(200).get();
+      const docs = res.docs || res || [];
+      const index = {};
+      docs.forEach(d=>{
+        const data = d.data ? d.data() : d;
+        (data.postings||[]).forEach(p=>{
+          if(!(p.id in index)) index[p.id] = Object.assign({}, p, {digestDate: data.date});
+        });
+      });
+      allPostingsById = index;
+    }catch(e){
+      allPostingsById = {};
+    }
+  }
+
+  async function loadLatest(){
+    const res = await db.collection("digests").orderBy("date","desc").limit(1).get();
+    const docs = res.docs || res || [];
+    if(docs.length){
+      renderDigest(docs[0].data ? docs[0].data() : docs[0]);
+    } else {
+      renderDigest(null);
+    }
+  }
+
+  async function loadHistoryList(){
+    const res = await db.collection("digests").orderBy("date","desc").limit(20).get();
+    const docs = res.docs || res || [];
+    const histSection = document.getElementById("history-section");
+    const histList = document.getElementById("history-list");
+    hasHistory = docs.length > 1;
+    if(currentView === "latest") histSection.hidden = !hasHistory;
+    histList.innerHTML = "";
+    docs.forEach(d=>{
+      const data = d.data ? d.data() : d;
+      const el = document.createElement("div");
+      el.className = "history-item";
+      el.textContent = "Week of " + data.date + " (" + ((data.counts && data.counts.total) || 0) + " postings)";
+      el.onclick = () => { setView("latest"); renderDigest(data); };
+      histList.appendChild(el);
+    });
+  }
+
+  document.getElementById("app").addEventListener("click", async (ev)=>{
+    const btn = ev.target.closest(".flag-btn");
+    if(!btn) return;
+    const jobId = btn.getAttribute("data-job-id");
+    const action = btn.getAttribute("data-flag-action");
+    const current = statusMap[jobId];
+    const next = current === action ? null : action;
+    btn.disabled = true;
+    try{
+      await db.doc("seen_jobs/" + jobId).update({status: next});
+      if(next){ statusMap[jobId] = next; } else { delete statusMap[jobId]; }
+      updateInterestedCount();
+      if(currentView === "latest") renderDigest(currentDigest); else renderInterestedView();
+    }catch(e){
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("hide-not-interested").addEventListener("change", (ev)=>{
+    hideNotInterested = ev.target.checked;
+    renderDigest(currentDigest);
+  });
+
+  document.querySelectorAll(".nav-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=> setView(btn.getAttribute("data-view")));
+  });
+
+  function updateInterestedCount(){
+    const n = Object.values(statusMap).filter(s=>s==="interested").length;
+    document.getElementById("interested-count").textContent = n ? " (" + n + ")" : "";
+  }
+
+  try{
+    await loadStatusMap();
+    await loadAllPostingsIndex();
+    await loadLatest();
+    await loadHistoryList();
+    updateInterestedCount();
+    document.getElementById("nav").hidden = false;
+  }catch(e){
+    document.getElementById("app").innerHTML = '<div class="empty">Could not load digest data.</div>';
+  }
+}
+
+main();
+</script>
